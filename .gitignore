@@ -1,0 +1,7 @@
+target/
+pedidos.db
+*.db
+.idea/
+*.iml
+.vscode/
+.claude/

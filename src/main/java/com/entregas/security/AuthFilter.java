@@ -29,6 +29,10 @@ public class AuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Preflight de CORS nao manda Authorization; deixa passar sem exigir token.
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
         return request.getRequestURI().startsWith("/auth/");
     }
 

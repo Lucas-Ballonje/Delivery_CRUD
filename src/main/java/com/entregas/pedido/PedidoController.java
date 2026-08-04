@@ -7,6 +7,7 @@ import com.entregas.pedido.dto.StatusUpdateRequest;
 import com.entregas.repository.PedidoRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -74,6 +75,15 @@ public class PedidoController {
         pedido.setStatus(novoStatus);
         pedidoRepository.save(pedido);
         return ResponseEntity.ok(pedido);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> excluir(@PathVariable Long id) {
+        if (!pedidoRepository.existsById(id)) {
+            return erro(HttpStatus.NOT_FOUND, "pedido nao encontrado");
+        }
+        pedidoRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     private boolean isBlank(String s) {

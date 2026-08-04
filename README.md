@@ -141,12 +141,12 @@ Resposta esperada (`201 Created`):
   "cliente": "Maria",
   "itens": ["Pizza", "Refrigerante"],
   "enderecoEntrega": "Rua A, 123",
-  "status": "RECEBIDO",
+  "status": "EM_PREPARO",
   "criadoEm": "2026-08-02T18:37:13.012"
 }
 ```
 
-Todo pedido novo nasce com status `RECEBIDO`.
+Todo pedido novo nasce com status `EM_PREPARO`.
 
 Erros possíveis:
 - `400` — faltou cliente, itens ou enderecoEntrega.

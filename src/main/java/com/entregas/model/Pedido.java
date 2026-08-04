@@ -49,7 +49,7 @@ public class Pedido {
         this.cliente = cliente;
         this.itens = itens;
         this.enderecoEntrega = enderecoEntrega;
-        this.status = StatusPedido.RECEBIDO;
+        this.status = StatusPedido.EM_PREPARO;
         this.criadoEm = LocalDateTime.now();
     }
 

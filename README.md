@@ -79,12 +79,12 @@ Corpo (JSON):
 | senha | string | sim         |
 
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:8080/auth/cadastro" -Method Post -ContentType "application/json" -Body '{"nome":"Lucas","email":"lucas@teste.com","senha":"123456"}'
+Invoke-RestMethod -Uri "http://localhost:8080/auth/cadastro" -Method Post -ContentType "application/json" -Body '{"nome":"Teste","email":"teste@teste.com","senha":"123456"}'
 ```
 
 Resposta esperada (`201 Created`):
 ```json
-{ "id": 1, "nome": "Lucas", "email": "lucas@teste.com" }
+{ "id": 1, "nome": "Teste", "email": "teste@teste.com" }
 ```
 
 Erros possíveis:
@@ -102,14 +102,14 @@ Corpo (JSON):
 | senha | string | sim         |
 
 ```powershell
-$login = Invoke-RestMethod -Uri "http://localhost:8080/auth/login" -Method Post -ContentType "application/json" -Body '{"email":"lucas@teste.com","senha":"123456"}'
+$login = Invoke-RestMethod -Uri "http://localhost:8080/auth/login" -Method Post -ContentType "application/json" -Body '{"email":"teste@teste.com","senha":"123456"}'
 $login
 $headers = @{ Authorization = "Bearer $($login.token)" }
 ```
 
 Resposta esperada (`200 OK`):
 ```json
-{ "token": "04211d51-be7e-420c-ad11-b1ce30b19575", "usuario": { "id": 1, "nome": "Lucas", "email": "lucas@teste.com" } }
+{ "token": "04211d51-be7e-420c-ad11-b1ce30b19575", "usuario": { "id": 1, "nome": "teste", "email": "teste@teste.com" } }
 ```
 
 Guarde o token: os exemplos abaixo usam a variável `$headers` criada acima, que já manda o token certo em todas as próximas chamadas.
@@ -224,7 +224,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/pedidos/9999" -Headers $headers
 Invoke-RestMethod -Uri "http://localhost:8080/pedidos/1/status" -Method Put -ContentType "application/json" -Headers $headers -Body '{"status":"VOANDO"}'
 
 # Email duplicado -> 409
-Invoke-RestMethod -Uri "http://localhost:8080/auth/cadastro" -Method Post -ContentType "application/json" -Body '{"nome":"Lucas","email":"lucas@teste.com","senha":"123456"}'
+Invoke-RestMethod -Uri "http://localhost:8080/auth/cadastro" -Method Post -ContentType "application/json" -Body '{"nome":"teste","email":"teste@teste.com","senha":"123456"}'
 ```
 
 Nesses casos o PowerShell mostra o erro em vermelho com o código HTTP (ex.: `401 Unauthorized`) — isso é o esperado, não é bug.

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -6,18 +6,24 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Paper from '@mui/material/Paper';
 import Snackbar from '@mui/material/Snackbar';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import { useAuth } from '../context/AuthContext';
 import { listarPedidos, criarPedido, atualizarStatusPedido, excluirPedido } from '../api/pedidos';
 import PedidoCard from '../components/PedidoCard';
 import NovoPedidoDialog from '../components/NovoPedidoDialog';
 import ConfirmarExclusaoDialog from '../components/ConfirmarExclusaoDialog';
+
+const INTERVALO_ATUALIZACAO_MS = 5000;
 
 export default function PedidosPage() {
   const { token, logout } = useAuth();
@@ -30,6 +36,7 @@ export default function PedidosPage() {
   const [idsAtualizando, setIdsAtualizando] = useState(() => new Set());
   const [mensagem, setMensagem] = useState('');
   const [pedidoParaExcluir, setPedidoParaExcluir] = useState(null);
+  const [buscaId, setBuscaId] = useState('');
 
   // Se a sessão expirou (token inválido no back-end, ex: servidor reiniciou),
   // desloga e manda pro login em vez de mostrar um erro genérico.
@@ -42,23 +49,41 @@ export default function PedidosPage() {
     return false;
   }
 
-  const carregarPedidos = useCallback(async () => {
-    setCarregando(true);
-    setErro('');
-    try {
-      const dados = await listarPedidos(token);
-      setPedidos([...dados].sort((a, b) => b.id - a.id));
-    } catch (err) {
-      if (!tratarErroDeSessao(err)) setErro(err.message);
-    } finally {
-      setCarregando(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  // mostrarLoading=false é usado na atualização automática em segundo plano,
+  // pra não ficar piscando o spinner de carregamento a cada poll.
+  const carregarPedidos = useCallback(
+    async (mostrarLoading = true) => {
+      if (mostrarLoading) setCarregando(true);
+      setErro('');
+      try {
+        const dados = await listarPedidos(token);
+        setPedidos([...dados].sort((a, b) => b.id - a.id));
+      } catch (err) {
+        if (!tratarErroDeSessao(err)) setErro(err.message);
+      } finally {
+        if (mostrarLoading) setCarregando(false);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [token],
+  );
 
   useEffect(() => {
     carregarPedidos();
   }, [carregarPedidos]);
+
+  // Atualiza a lista periodicamente, pra pegar pedidos criados fora do
+  // front-end (direto na API, por outro cliente, etc.) sem precisar recarregar.
+  useEffect(() => {
+    const intervalId = setInterval(() => carregarPedidos(false), INTERVALO_ATUALIZACAO_MS);
+    return () => clearInterval(intervalId);
+  }, [carregarPedidos]);
+
+  const pedidosFiltrados = useMemo(() => {
+    const termo = buscaId.trim();
+    if (!termo) return pedidos;
+    return pedidos.filter((p) => String(p.id).includes(termo));
+  }, [pedidos, buscaId]);
 
   async function handleCriarPedido(dadosPedido) {
     try {
@@ -116,7 +141,7 @@ export default function PedidosPage() {
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <Tooltip title="Atualizar lista">
             <IconButton
-              onClick={carregarPedidos}
+              onClick={() => carregarPedidos(true)}
               disabled={carregando}
               size="small"
               sx={{ border: 1, borderColor: 'divider' }}
@@ -129,6 +154,30 @@ export default function PedidosPage() {
           </Button>
         </Stack>
       </Stack>
+
+      <TextField
+        value={buscaId}
+        onChange={(e) => setBuscaId(e.target.value)}
+        placeholder="Buscar pedido pelo ID..."
+        size="small"
+        sx={{ mb: 3, maxWidth: 320, width: '100%' }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchRoundedIcon fontSize="small" color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: buscaId && (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setBuscaId('')} sx={{ p: 0.5 }}>
+                  <CloseRoundedIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
 
       {erro && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setErro('')}>
@@ -151,6 +200,14 @@ export default function PedidosPage() {
             Novo pedido
           </Button>
         </Paper>
+      ) : pedidosFiltrados.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 6, textAlign: 'center' }}>
+          <SearchRoundedIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+          <Typography variant="h6">Nenhum pedido encontrado</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Não existe pedido com ID contendo "{buscaId.trim()}".
+          </Typography>
+        </Paper>
       ) : (
         <Box
           sx={{
@@ -159,7 +216,7 @@ export default function PedidosPage() {
             gap: 2,
           }}
         >
-          {pedidos.map((pedido) => (
+          {pedidosFiltrados.map((pedido) => (
             <PedidoCard
               key={pedido.id}
               pedido={pedido}

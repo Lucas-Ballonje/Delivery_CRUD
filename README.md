@@ -286,11 +286,13 @@ Esse arquivo **não é commitado** (está no `.gitignore`) — o modelo versiona
 - **`/cadastro`** — cria um novo usuário (`POST /auth/cadastro`) e já faz login em seguida.
 - **`/pedidos`** — tela principal, protegida (só acessível logado):
   - lista todos os pedidos (`GET /pedidos`), com cliente, itens, endereço, data de criação e status atual;
+  - **atualiza a lista automaticamente a cada 5 segundos** (em segundo plano, sem piscar loading), então pedidos criados fora do front-end (direto na API, por outro cliente etc.) aparecem sozinhos — não precisa ficar dando F5; o botão de atualizar ao lado do título força uma atualização na hora;
+  - **campo de busca por ID** logo abaixo do cabeçalho — filtra a lista já carregada pelos pedidos cujo ID contém o texto digitado;
   - permite trocar o status de cada pedido direto na listagem (`PUT /pedidos/{id}/status`);
   - permite excluir um pedido (ícone de lixeira em cada card, com confirmação) — útil inclusive para remover pedidos já cancelados (`DELETE /pedidos/{id}`);
   - botão **"Novo pedido"** abre um formulário para criar um pedido (`POST /pedidos`), informando cliente, endereço de entrega e a lista de itens.
 
-Se o token expirar ou for inválido (por exemplo, porque o back-end reiniciou e perdeu os tokens em memória), a próxima chamada à API retorna `401` e o front-end mostra o erro — é só fazer login de novo.
+Se o token expirar ou for inválido (por exemplo, porque o back-end reiniciou e perdeu os tokens em memória), a próxima chamada à API retorna `401` e o front-end desloga automaticamente e volta pra tela de login.
 
 ### Tema claro/escuro
 
